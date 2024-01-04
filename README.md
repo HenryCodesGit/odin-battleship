@@ -1,5 +1,1 @@
-Template repository for all boilerplate learned from odin project up to the 'Linting' lesson.
-
-Sets up
--Webpack for style sheets, JS, images, fonts,
--Dev server
+Battleship Project for The Odin Project - Javascript Course.
