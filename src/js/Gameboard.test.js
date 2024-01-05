@@ -188,6 +188,29 @@ describe('"allShipsSunk" function testing', ()=>{
         board.placeShip(mockShip2,1,2);
         expect(board.isSunk()).toBe(false);
     });
+    test('No ships sunk becomes all ship sunk after hit',()=>{
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            length: 1, 
+            isSunk() {return true}
+        };
+        const mockShip2 = {
+            length: 1, 
+            isSunk() {
+                return this.sunk;
+            },
+            sunk: false,
+            hit(){this.sunk = true;}
+        };
+
+        board.placeShip(mockShip,1,1);
+        board.placeShip(mockShip2,1,2);
+        expect(board.isSunk()).toBe(false);
+        board.receiveAttack(1,2);
+        expect(board.isSunk()).toBe(true);
+        
+    })
     test('Board is empty', () => {
         const BOARD_SIZE = 10;
         const board = new Gameboard(BOARD_SIZE);
