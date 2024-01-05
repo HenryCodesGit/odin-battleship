@@ -11,16 +11,16 @@ describe('Gameboard constructor testing', () => {
         // Empty 10 by 10 array.
         expect(board.array).toEqual(
             [
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
-                [undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
+                [{},{},{},{},{},{},{},{},{},{}],
             ]
         );
     })
@@ -98,4 +98,100 @@ describe('"placeShip" function testing', () => {
         board.placeShip(mockShip,...location,placeOnY);
         expect(board.placeShip(mockShip2,...location2,placeOnY)).toBe(false);
     })
+})
+
+describe('"receiveAttack" function testing', ()=>{
+
+    test('Hit an active ship', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            hit(){return true;},
+            length: 2,
+        };
+        const location = [4,4];
+        const placeOnY = true;
+
+        board.placeShip(mockShip,...location,placeOnY);
+        // Attacking location of the ship should register a hit
+        expect(board.receiveAttack(4,4)).toBe(true);
+    })
+
+    test('Cannot shoot the same place twice', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            hit(){return true;},
+            length: 2,
+        };
+        const location = [4,4];
+        const placeOnY = true;
+        board.placeShip(mockShip,...location,placeOnY);
+        board.receiveAttack(4,4);
+        expect(board.receiveAttack(4,4)).toBe(false); // Attack existing ship
+
+        board.receiveAttack(1,1);
+        expect(board.receiveAttack(1,1)).toBe(false); // Attack empty spot twice
+    })
+
+    test('Cannot attack spaces outside the board', ()=>{
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        expect(()=>{board.receiveAttack(-1,1)}).toThrow(/outside/i);
+        expect(()=>{board.receiveAttack(1,-1)}).toThrow(/outside/i);
+        expect(()=>{board.receiveAttack(BOARD_SIZE+1,1)}).toThrow(/outside/i);
+        expect(()=>{board.receiveAttack(1,BOARD_SIZE+1)}).toThrow(/outside/i);
+    })
+})
+
+describe('"allShipsSunk" function testing', ()=>{
+    test('All ships are sunk', () =>{
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            length: 4, 
+            isSunk() {return true}
+        }
+
+        board.placeShip(mockShip,1,1);
+        expect(board.isSunk()).toBe(true);
+    });
+    test('Some ships are sunk', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            length: 1, 
+            isSunk() {return true}
+        };
+        const mockShip2 = {
+            length: 1, 
+            isSunk() {return false}
+        };
+
+        board.placeShip(mockShip,1,1);
+        board.placeShip(mockShip2,1,2);
+        expect(board.isSunk()).toBe(false);
+    });
+    test('No ships are sunk', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            length: 1, 
+            isSunk() {return false}
+        };
+        const mockShip2 = {
+            length: 1, 
+            isSunk() {return false}
+        };
+
+        board.placeShip(mockShip,1,1);
+        board.placeShip(mockShip2,1,2);
+        expect(board.isSunk()).toBe(false);
+    });
+    test('Board is empty', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+
+        expect(()=>{board.isSunk()}).toThrow(/empty/i);
+    });
 })
