@@ -83,4 +83,19 @@ describe('"placeShip" function testing', () => {
         expect(board.array[4][4]).toBe(mockShip);
         expect(board.array[4][5]).toBe(mockShip);
     })
+
+    test('Disallow ship overlapping',()=>{
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {length: 2};
+        const location = [4,4];
+        const placeOnY = true;
+
+        const mockShip2 = {length: 2};
+        const location2 = [4,5];
+
+        // Assume ship is oriented in x-direction
+        board.placeShip(mockShip,...location,placeOnY);
+        expect(board.placeShip(mockShip2,...location2,placeOnY)).toBe(false);
+    })
 })

@@ -26,8 +26,12 @@ export default class Gameboard{
     }
 
     placeShip(ship, x, y, placeOnY){
-        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false;
+        // Edge conditions
+        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; // Case 1: Out of the board
+        if(this.#array[x][y]) return false; // Case 2: Ship exists at the location already
 
+        // Set currIndex and change which index of the array uses currIndex.
+        // Dependent on if placeOnY flag is active
         let currIndex;
         for(let i = 0; i<ship.length; i+=1){
             currIndex = ((placeOnY) ? y : x) + i;
