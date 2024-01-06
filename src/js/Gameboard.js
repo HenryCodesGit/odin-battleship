@@ -10,7 +10,7 @@ export default class Gameboard{
         for(let i = 0; i<output.length; i+=1){
             output[i] = [...this.#array[i]];
         }
-        return output;
+        return Object.freeze(output);
     }
 
     #size;
@@ -29,18 +29,17 @@ export default class Gameboard{
 
     placeShip(ship, x, y, placeOnY){
         // Edge conditions
-        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; // Case 1: Out of the board
+        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; // Case 1: Co-ordinate is out of the board
         if(JSON.stringify(this.#array[x][y]) !== "{}") return false; // Case 2: Ship exists at the location already
+        if((x+ship.length-1) >= this.#size || (y+ship.length-1) >= this.#size) return false;// Case 3: Ship placement will result in board overflow
 
         // Set currIndex and change which index of the array uses currIndex.
         // Dependent on if placeOnY flag is active
         let currIndex;
         for(let i = 0; i<ship.length; i+=1){
             currIndex = ((placeOnY) ? y : x) + i;
-            if(currIndex >= this.#size) return false;
-
-            this.#array[placeOnY ? x : currIndex][placeOnY ? currIndex : y] = ship;
-            this.#ships.push(ship);
+            Object.assign(this.#array[placeOnY ? x : currIndex][placeOnY ? currIndex : y], {ship});
+            if(!this.#ships.find((val) => val === ship)) this.#ships.push(ship);
         }
 
         return true;
@@ -50,23 +49,25 @@ export default class Gameboard{
         // Edge case: Shooting outside the board
         if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) throw new Error('Cannot select co-ordinates that are outside the board!'); // Case 1: Out of the board
 
-        // Case 1: Empty spot
-        // Initiate the array if it has not yet been.
-        const target = this.#array[x][y];
 
-        // Case 2: Do not proceed if position has been hit before
+        const target = this.#array[x][y];
+        // Case 1: Do not proceed if position has been hit before
         if(Object.hasOwn(target,'revealed')) return false;
 
-        // Case 3: Hit the position.
-        if(target.hit) target.hit(); // If a target exists, call its hit function
-
-         // Assign new property denoting this spot has been targeted before
+        // Case 2: New position that has not been hit before
         Object.assign(target, {revealed: true})
-        return true;
+
+        // Case 2a: If a target does not exist, return -1 (a miss)
+        if(!target.ship?.hit) return 'miss'
+    
+        // Case 2b: Target has a hit function. Call it, then return 1 (a hit)
+        target.ship.hit();
+
+        return target.ship.isSunk() ? 'sunk' : 'hit';
     }
 
     isSunk(){
-        if(this.#ships.length === 0) throw new Error('The board is currently empty and has no ships!');
+        if(this.#ships.length === 0) return null;
         return this.#ships.reduce((isAllSunk,currentShip) => isAllSunk && currentShip.isSunk(),true);
     }
 }

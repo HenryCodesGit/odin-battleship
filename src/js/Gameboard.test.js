@@ -34,7 +34,7 @@ describe('"placeShip" function testing', () => {
 
         // Board to return true if the placement is successful
         expect(board.placeShip(mockShip, ...location)).toBe(true);
-        expect(board.array[2][3]).toBe(mockShip);
+        expect(board.array[2][3].ship).toBe(mockShip);
     })
 
     test('Invalid locations returns false',()=>{
@@ -56,19 +56,21 @@ describe('"placeShip" function testing', () => {
 
         // Assume ship is oriented in x-direction
         board.placeShip(mockShip,...location);
-        expect(board.array[5][5]).toBe(mockShip);
-        expect(board.array[6][5]).toBe(mockShip);
+        expect(board.array[5][5].ship).toBe(mockShip);
+        expect(board.array[6][5].ship).toBe(mockShip);
     })
 
     test('Disallow board overflow',()=>{
         const BOARD_SIZE = 10;
         const board = new Gameboard(BOARD_SIZE);
-        const mockShip = {length: 2};
+        const mockShip = {length: 6};
         const location = [9,9];
 
         // Assume ship is oriented in x-direction
         expect(board.placeShip(mockShip, ...[4,4])).toBe(true); // Barely fits
+        expect(board.array[4][4].ship).toBe(mockShip) // Board should not have placed part of the ship if it overflows
         expect(board.placeShip(mockShip, ...location)).toBe(false); // Overflows
+        expect(board.array[9][9]).toStrictEqual({}) // Board should not have placed part of the ship if it overflows
     })
 
     test('Allow ship placement in Y-direction',()=>{
@@ -80,8 +82,8 @@ describe('"placeShip" function testing', () => {
 
         // Assume ship is oriented in x-direction
         board.placeShip(mockShip,...location,placeOnY);
-        expect(board.array[4][4]).toBe(mockShip);
-        expect(board.array[4][5]).toBe(mockShip);
+        expect(board.array[4][4].ship).toBe(mockShip);
+        expect(board.array[4][5].ship).toBe(mockShip);
     })
 
     test('Disallow ship overlapping',()=>{
@@ -107,6 +109,7 @@ describe('"receiveAttack" function testing', ()=>{
         const board = new Gameboard(BOARD_SIZE);
         const mockShip = {
             hit(){return true;},
+            isSunk(){return false},
             length: 2,
         };
         const location = [4,4];
@@ -114,10 +117,10 @@ describe('"receiveAttack" function testing', ()=>{
 
         board.placeShip(mockShip,...location,placeOnY);
         // Attacking location of the ship should register a hit
-        expect(board.receiveAttack(4,4)).toBe(true);
+        expect(board.receiveAttack(4,4)).toBe('hit');
     })
 
-    test('Cannot shoot the same place twice', () => {
+    test('Miss a ship', () => {
         const BOARD_SIZE = 10;
         const board = new Gameboard(BOARD_SIZE);
         const mockShip = {
@@ -126,8 +129,25 @@ describe('"receiveAttack" function testing', ()=>{
         };
         const location = [4,4];
         const placeOnY = true;
+
+        board.placeShip(mockShip,...location,placeOnY);
+        // Attacking location of the ship should register a hit
+        expect(board.receiveAttack(1,1)).toBe('miss');
+    })
+
+    test('Cannot shoot the same place twice', () => {
+        const BOARD_SIZE = 10;
+        const board = new Gameboard(BOARD_SIZE);
+        const mockShip = {
+            hit(){return true;},
+            isSunk(){return false;},
+            length: 2,
+        };
+        const location = [4,4];
+        const placeOnY = true;
         board.placeShip(mockShip,...location,placeOnY);
         board.receiveAttack(4,4);
+        
         expect(board.receiveAttack(4,4)).toBe(false); // Attack existing ship
 
         board.receiveAttack(1,1);
@@ -215,6 +235,6 @@ describe('"allShipsSunk" function testing', ()=>{
         const BOARD_SIZE = 10;
         const board = new Gameboard(BOARD_SIZE);
 
-        expect(()=>{board.isSunk()}).toThrow(/empty/i);
+        expect(board.isSunk()).toBe(null);
     });
 })
