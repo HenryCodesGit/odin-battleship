@@ -29,13 +29,22 @@ export default class Gameboard{
 
     placeShip(ship, x, y, placeOnY){
         // Edge conditions
-        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; // Case 1: Co-ordinate is out of the board
-        if(JSON.stringify(this.#array[x][y]) !== "{}") return false; // Case 2: Ship exists at the location already
-        if((x+ship.length-1) >= this.#size || (y+ship.length-1) >= this.#size) return false;// Case 3: Ship placement will result in board overflow
+        // Case 1: Co-ordinate is out of the board
+        if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; 
+        // Case 3: Ship placement will result in board overflow
+        if((x+ship.length-1) >= this.#size || (y+ship.length-1) >= this.#size) return false;
+
+        // Case 2: Ship exists at the location already
+        let currIndex;
+        if(JSON.stringify(this.#array[x][y]) !== "{}") return false; 
+        for(let i = 0; i<ship.length; i+=1){
+            currIndex = ((placeOnY) ? y : x) + i;
+            if(JSON.stringify(this.#array[placeOnY ? x : currIndex][placeOnY ? currIndex : y]) !== "{}") return false; 
+        }
 
         // Set currIndex and change which index of the array uses currIndex.
         // Dependent on if placeOnY flag is active
-        let currIndex;
+        
         for(let i = 0; i<ship.length; i+=1){
             currIndex = ((placeOnY) ? y : x) + i;
             Object.assign(this.#array[placeOnY ? x : currIndex][placeOnY ? currIndex : y], {ship});
@@ -58,7 +67,7 @@ export default class Gameboard{
         Object.assign(target, {revealed: true})
 
         // Case 2a: If a target does not exist, return -1 (a miss)
-        if(!target.ship?.hit) return 'miss'
+        if(!Object.hasOwn(target, 'ship')) return 'miss'
     
         // Case 2b: Target has a hit function. Call it, then return 1 (a hit)
         target.ship.hit();
