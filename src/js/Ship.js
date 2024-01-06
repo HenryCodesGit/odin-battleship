@@ -12,8 +12,6 @@ export default class Ship {
     #type;
     get type() { return this.#type }
 
-    locations = [];
-
     static #shipTypes = {
         carrier: {length: 5},
         battleship: {length: 4},
