@@ -46,8 +46,10 @@ export default class Gameboard{
         // Dependent on if placeOnY flag is active
         
         for(let i = 0; i<ship.length; i+=1){
-            currIndex = ((placeOnY) ? y : x) + i;
-            Object.assign(this.#array[placeOnY ? x : currIndex][placeOnY ? currIndex : y], {ship});
+            const xIndex = x + ((placeOnY) ? 0 : i);
+            const yIndex = y + ((placeOnY) ? i : 0);
+            ship.locations?.push([xIndex, yIndex]);
+            Object.assign(this.#array[xIndex][yIndex], {ship});
             if(!this.#ships.find((val) => val === ship)) this.#ships.push(ship);
         }
 
