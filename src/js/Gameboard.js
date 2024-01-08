@@ -32,7 +32,7 @@ export default class Gameboard{
         // Case 1: Co-ordinate is out of the board
         if(x<0 || x>this.#size-1 || y < 0 || y > this.#size-1) return false; 
         // Case 3: Ship placement will result in board overflow
-        if((x+ship.length-1) >= this.#size || (y+ship.length-1) >= this.#size) return false;
+        if( !placeOnY && (x+ship.length-1) >= this.#size || placeOnY && (y+ship.length-1) >= this.#size) return false;
 
         // Case 2: Ship exists at the location already
         let currIndex;
