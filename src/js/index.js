@@ -11,6 +11,15 @@ import Gameboard from "./Gameboard";
 /* ************************* */
 
 const BOARD_SIZE = 10;
+const playerShips = Object.freeze(['carrier','battleship','cruiser','cruiser','destroyer']);
+
+let clickHandler; 
+let player1Board;
+let player2Board;
+let player1;
+let player2;
+
+/* ************************* */
 
 const templateCell = document.createElement('div');
 templateCell.classList.add('cell');
@@ -22,33 +31,30 @@ const boardElements = {
     player: document.querySelector('.player.board'),
     cpu: document.querySelector('.cpu.board'),
 }
-window.boardPieces = {
+boardElements.cpu.classList.add('hidden');
+const keyArray = Object.keys(boardElements);
+const boardPieces = {
     player: [],
     cpu: [],
 };
 
-const keyArray = Object.keys(boardElements);
-for(let a = 0; a < keyArray.length ; a+=1){
-    for(let i = 0; i < BOARD_SIZE; i+=1){
-        const currRow = templateRow.cloneNode();
-        for(let j = 0; j<BOARD_SIZE; j+=1){
-            const currElement = templateCell.cloneNode();
-            currElement.setAttribute('data-x',i);
-            currElement.setAttribute('data-y',j);
 
-            // eslint-disable-next-line no-loop-func
-            currElement.addEventListener('click', ()=>{
-                // All pieces when clicked on call the clickHandler function and pass their info
-                clickHandler(keyArray[a],i,j);
-            })
-
-            currRow.appendChild(currElement);
-        }
-        boardElements[keyArray[a]].appendChild(currRow);
-    }
-
+const gameStartModal = document.querySelector('.game-start'); gameStartModal.showModal();
+gameStartModal.querySelector('button').onclick = () => { 
+    resetBoard(); 
+    startNewGame();
+    gameStartModal.close();
 }
 
+const gameOverModal = document.querySelector('.game-over'); gameOverModal.close();
+gameOverModal.querySelector('button').onclick = () => { 
+    resetBoard();
+    gameOverModal.close();
+    gameStartModal.showModal();  
+}
+
+
+/*
 /* ******************************************************
 /* ******************************************************
 /* ******************************************************
@@ -56,55 +62,100 @@ for(let a = 0; a < keyArray.length ; a+=1){
 /* ******************************************************
 */
 
-const playerShips = Object.freeze(['carrier','battleship','cruiser','cruiser','destroyer']);
-window.player1Board = new Gameboard(BOARD_SIZE);
-window.player2Board = new Gameboard(BOARD_SIZE);
-window.player1 = new Player(window.player1Board);
-window.player2 = new ComputerPlayer(window.player2Board,BOARD_SIZE);
-window.player1.setTargetTo(window.player2);
-window.player2.setTargetTo(window.player1);
-
-// Global callback function that will do something when clicked, depending on state of the game
-// TODO: Ask player to set up their ships instead of placing them randomly as below
-let clickHandler; 
-
-playerShips.forEach((ship) => {
-    let placed = false;
-    let x;
-    let y;
-    let placeRandomly;
-    let currShip;
-    while(!placed){
-        currShip = Ship.getShip(ship);
-        x = parseInt(Math.random()*BOARD_SIZE,10);
-        y = parseInt(Math.random()*BOARD_SIZE,10);
-        placeRandomly = Boolean(parseInt(Math.random()*2,10));
-        placed = window.player1.placeShip(currShip,x,y,placeRandomly);
+function resetBoard(){
+    // Hide the CPU board again so the player can place their pieces
+    boardElements.cpu.classList.add('hidden');
+    
+    // Delete old grid
+    while(boardElements.cpu.lastElementChild){
+        boardElements.cpu.removeChild(boardElements.cpu.lastChild);
     }
-    // Then update HTML element for the ship;
-    currShip.locations.forEach((location) =>{
-        console.log(`${location[0]}, ${location[1]}`);
-        document.querySelector(`.player .cell[data-x='${location[1]}'][data-y='${location[0]}']`)
-            .classList.add('ship');
+
+    while(boardElements.player.lastElementChild){
+        boardElements.player.removeChild(boardElements.player.lastChild);
+    }
+    
+    // Make new grid
+    for(let a = 0; a < keyArray.length ; a+=1){
+        for(let i = 0; i < BOARD_SIZE; i+=1){
+            const currRow = templateRow.cloneNode();
+            for(let j = 0; j<BOARD_SIZE; j+=1){
+                const currElement = templateCell.cloneNode();
+                currElement.setAttribute('data-x',i);
+                currElement.setAttribute('data-y',j);
+
+                // eslint-disable-next-line no-loop-func
+                currElement.addEventListener('click', ()=>{
+                    // All pieces when clicked on call the clickHandler function and pass their info
+                    clickHandler(keyArray[a],i,j);
+                })
+
+                currRow.appendChild(currElement);
+            }
+            boardElements[keyArray[a]].appendChild(currRow);
+        }
+    } 
+}
+
+function startNewGame(){
+    player1Board = new Gameboard(BOARD_SIZE);
+    player2Board = new Gameboard(BOARD_SIZE);
+    player1 = new Player(player1Board);
+    player2 = new ComputerPlayer(player2Board,BOARD_SIZE);
+    player1.setTargetTo(player2);
+    player2.setTargetTo(player1);
+
+    // Global callback function that will do something when clicked, depending on state of the game
+    // TODO: Ask player to set up their ships instead of placing them randomly as below
+    playerShips.forEach((ship) => {
+        let placed = false;
+        let x;
+        let y;
+        let placeRandomly;
+        let currShip;
+        while(!placed){
+            currShip = Ship.getShip(ship);
+            x = parseInt(Math.random()*BOARD_SIZE,10);
+            y = parseInt(Math.random()*BOARD_SIZE,10);
+            placeRandomly = Boolean(parseInt(Math.random()*2,10));
+            placed = player1.placeShip(currShip,x,y,placeRandomly);
+        }
+        // Then update HTML element for the ship;
+        currShip.locations.forEach((location) =>{
+            console.log(`${location[0]}, ${location[1]}`);
+            document.querySelector(`.player .cell[data-x='${location[1]}'][data-y='${location[0]}']`)
+                .classList.add('ship');
+        })
+        
+        
+        placed = false;
+        while(!placed){
+            x = parseInt(Math.random()*BOARD_SIZE,10);
+            y = parseInt(Math.random()*BOARD_SIZE,10);
+            placeRandomly = Boolean(parseInt(Math.random()*2,10));
+            placed = player2.placeShip(Ship.getShip(ship),x,y,placeRandomly);
+        }
     })
-    
-    
-    placed = false;
-    while(!placed){
-        x = parseInt(Math.random()*BOARD_SIZE,10);
-        y = parseInt(Math.random()*BOARD_SIZE,10);
-        placeRandomly = Boolean(parseInt(Math.random()*2,10));
-        placed = window.player2.placeShip(Ship.getShip(ship),x,y,placeRandomly);
-    }
-})
 
-clickHandler = function respondToPlayerAttack(key, x, y){
+    boardElements.cpu.classList.remove('hidden');
+    clickHandler = respondToPlayerAttack
+}
+
+function gameOver(winner){
+    clickHandler = () => {
+        console.log('Currently disabled');
+    }
+    gameOverModal.querySelector('p').textContent = `Game over! The winner is the ${winner}`;
+    gameOverModal.showModal();
+}
+
+function respondToPlayerAttack(key, x, y){
     // Edge case: Clicking on player board does nothing once game starts
     if(key === 'player') return;
 
     console.log(`Key is: ${key}. Data-x is: ${x}. Data-y is: ${y}`);
     
-    const moveStatus = window.player1.attack(x, y);
+    const moveStatus = player1.attack(x, y);
     console.log(`You attack and the result is... ${moveStatus}`);
 
     // Edge case: Clicking on an already revealed location does nothing
@@ -117,10 +168,14 @@ clickHandler = function respondToPlayerAttack(key, x, y){
     else 
         currentElement.classList.add('hit');
 
-    if(moveStatus === 'allSunk') alert('You won!');
+    if(moveStatus === 'allSunk'){
+        console.log('The player won!');
+        gameOver('player');
+        return;
+    }
 
     // Get the computer's attack
-    window.player2.attack(BOARD_SIZE,(xNew,yNew,result)=>{
+    player2.attack(BOARD_SIZE,(xNew,yNew,result)=>{
         console.log(`Data-x is: ${xNew}. Data-y is: ${yNew}, Result is: ${result}`);
 
         const element = document.querySelector(`.player .cell[data-x='${yNew}'][data-y='${xNew}']`);
@@ -129,7 +184,10 @@ clickHandler = function respondToPlayerAttack(key, x, y){
         else 
             element.classList.add('hit');
 
-            if(result ==='allSunk') alert('You lost!');
+            if(result ==='allSunk'){
+                console.log('The computer won!');
+                gameOver('computer');
+            }
     })
 
 }

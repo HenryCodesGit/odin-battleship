@@ -45,6 +45,10 @@ body {
   border:1px solid blue;
 }
 
+.cpu.board.hidden{
+  display: none;
+}
+
 .cell{
   border: 1px solid green;
   height: 15px;
@@ -65,4 +69,36 @@ body {
 
 .cpu .hit{
   background-color:rgb(17, 161, 17)
+}
+
+dialog.game-over{
+  flex: initial;
+  .container{
+    flex-direction: column;
+    align-items: center;
+  
+    > * {
+      margin: 5px;
+    }
+  
+    button {
+      width: fit-content;
+    }
+  }
+}
+
+dialog.game-start{
+  flex: initial;
+  .container{
+    flex-direction: column;
+    align-items: center;
+  
+    > * {
+      margin: 5px;
+    }
+  
+    button {
+      width: fit-content;
+    }
+  }
 }
