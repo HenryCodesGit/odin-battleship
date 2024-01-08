@@ -11,7 +11,7 @@ table { border-collapse: collapse; border-spacing: 0;}
 body {
   height: 100svh;
   width: 100svw;
-  background-color: #ddd;
+  background-color: #222;
 
   display: flex;
   justify-content: center;

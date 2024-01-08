@@ -131,4 +131,5 @@ clickHandler = function respondToPlayerAttack(key, x, y){
 
             if(result ==='allSunk') alert('You lost!');
     })
+
 }
