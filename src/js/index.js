@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable no-alert */
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-console */
@@ -13,7 +14,10 @@ import Gameboard from "./Gameboard";
 const BOARD_SIZE = 10;
 const playerShips = Object.freeze(['carrier','battleship','cruiser','cruiser','destroyer']);
 
-let clickHandler; 
+let clickHandler = () => {}; 
+let mouseOverHandler = () => {};
+let rightClickHandler = () => {};
+
 let player1Board;
 let player2Board;
 let player1;
@@ -33,10 +37,10 @@ const boardElements = {
 }
 boardElements.cpu.classList.add('hidden');
 const keyArray = Object.keys(boardElements);
-const boardPieces = {
-    player: [],
-    cpu: [],
-};
+// const boardPieces = {
+//     player: [],
+//     cpu: [],
+// };
 
 
 const gameStartModal = document.querySelector('.game-start'); gameStartModal.showModal();
@@ -84,11 +88,21 @@ function resetBoard(){
                 currElement.setAttribute('data-x',i);
                 currElement.setAttribute('data-y',j);
 
+                // All pieces when clicked on call the clickHandler function and pass their info
+                // eslint-disable-next-line no-loop-func        
+                currElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    clickHandler(keyArray[a],i,j)
+                });
                 // eslint-disable-next-line no-loop-func
-                currElement.addEventListener('click', ()=>{
-                    // All pieces when clicked on call the clickHandler function and pass their info
-                    clickHandler(keyArray[a],i,j);
-                })
+                currElement.addEventListener('mouseover', (e) => {
+                    e.preventDefault();
+                    mouseOverHandler(keyArray[a],i,j);
+                });
+                currElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    rightClickHandler(keyArray[a],i,j);
+                });
 
                 currRow.appendChild(currElement);
             }
@@ -105,30 +119,17 @@ function startNewGame(){
     player1.setTargetTo(player2);
     player2.setTargetTo(player1);
 
-    // Global callback function that will do something when clicked, depending on state of the game
-    // TODO: Ask player to set up their ships instead of placing them randomly as below
+    placeCPUShips();
+    placeHumanShips();
+}
+
+function placeCPUShips(){
     playerShips.forEach((ship) => {
         let placed = false;
         let x;
         let y;
         let placeRandomly;
-        let currShip;
-        while(!placed){
-            currShip = Ship.getShip(ship);
-            x = parseInt(Math.random()*BOARD_SIZE,10);
-            y = parseInt(Math.random()*BOARD_SIZE,10);
-            placeRandomly = Boolean(parseInt(Math.random()*2,10));
-            placed = player1.placeShip(currShip,x,y,placeRandomly);
-        }
-        // Then update HTML element for the ship;
-        currShip.locations.forEach((location) =>{
-            console.log(`${location[0]}, ${location[1]}`);
-            document.querySelector(`.player .cell[data-x='${location[1]}'][data-y='${location[0]}']`)
-                .classList.add('ship');
-        })
-        
-        
-        placed = false;
+                
         while(!placed){
             x = parseInt(Math.random()*BOARD_SIZE,10);
             y = parseInt(Math.random()*BOARD_SIZE,10);
@@ -136,9 +137,32 @@ function startNewGame(){
             placed = player2.placeShip(Ship.getShip(ship),x,y,placeRandomly);
         }
     })
+}
 
-    boardElements.cpu.classList.remove('hidden');
-    clickHandler = respondToPlayerAttack
+function placeHumanShips(ships = playerShips, currentIndex = 0) {
+    // Exit condition
+    if(currentIndex >= ships.length){
+      boardElements.cpu.classList.remove('hidden');
+      clickHandler = respondToPlayerAttack;
+      mouseOverHandler = ()=>{};
+      rightClickHandler = ()=>{};
+      return;
+    }
+
+    // Get the current ship to instantiate
+    let currShip = Ship.getShip(ships[currentIndex]);
+    let placeOnX = false;
+
+    // Need to use function binding because handler arguments have been predefined already in the grid instantiation
+    mouseOverHandler = highlightShipCells.bind({length: currShip.length, placeOnX});
+    clickHandler = clickPlaceShip.bind({currShip, ships, currentIndex, placeOnX});
+    rightClickHandler = (key, x, y) => {
+        console.log('hi');
+        placeOnX = !placeOnX;
+        mouseOverHandler = highlightShipCells.bind({length: currShip.length, placeOnX})
+        clickHandler = clickPlaceShip.bind({currShip, ships, currentIndex, placeOnX});
+        mouseOverHandler.call({length: currShip.length, placeOnX},key,x,y)
+    }
 }
 
 function gameOver(winner){
@@ -190,4 +214,44 @@ function respondToPlayerAttack(key, x, y){
             }
     })
 
+}
+
+function highlightShipCells(key,x,y){
+    // 
+    const highlightInformation = this;  // Note: 'this' is passed in through function binding
+
+    // First, un-highlight all other existing cells
+    boardElements[key].querySelectorAll('[data-x][data-y]').forEach(cell => cell.classList.remove('temp-ship'));
+
+    // Highlight the currently selected cell
+    boardElements[key].querySelector(`[data-x='${x}'][data-y='${y}']`).classList.add('temp-ship');
+
+    // Highlight neighbours up to the length of the ship
+    for(let i = 0; i < highlightInformation.length ; i+=1){
+        let currX = x + ((highlightInformation.placeOnX) ? i : 0);
+        let currY = y + (!(highlightInformation.placeOnX) ? i : 0);
+        boardElements[key].querySelector(`[data-x='${currX}'][data-y='${currY}']`)?.classList.add('temp-ship');
+    }
+    
+}
+
+function clickPlaceShip(_, y, x){
+
+    console.log(`The current ship is ${this.currShip.length}`);
+    console.log(`Requesting to put it at ${x},${y}`);
+
+    let validPlacement = player1.placeShip(
+        this.currShip,
+        x,
+        y,
+        this.placeOnX
+    );
+
+    this.currShip.locations.forEach((location) =>{
+        document.querySelector(`.player .cell[data-x='${location[1]}'][data-y='${location[0]}']`)
+            .classList.add('ship');
+    })
+
+    if(validPlacement){placeHumanShips(this.ships, this.currentIndex+1)}
+    else placeHumanShips(this.ships, this.currentIndex);
 }
